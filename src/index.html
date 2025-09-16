@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ProtonDrive Sync</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>ProtonDrive Sync</h1>
+        <div class="header-buttons">
+          <button id="addSyncPairBtn" class="btn btn-primary">Add Sync Pair</button>
+          <button id="syncAllBtn" class="btn btn-secondary">Sync All</button>
+          <button id="settingsBtn" class="btn btn-outline">Settings</button>
+        </div>
+      </header>
+
+      <main>
+        <!-- Sync Pairs List -->
+        <div id="syncPairsList" class="sync-pairs-container">
+          <div class="empty-state" id="emptyState">
+            <img src="Assets/Img/folder.png" alt="Folder icon" />
+            <h3>No sync pairs configured</h3>
+            <p>Click "Add Sync Pair" to get started</p>
+          </div>
+        </div>
+
+        <!-- Add/Edit Sync Pair Modal -->
+        <div id="syncPairModal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2 id="modalTitle">Add Sync Pair</h2>
+              <button class="close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="localFolder">Local Folder:</label>
+                <div class="folder-input">
+                  <input type="text" id="localFolder" placeholder="Select local folder..." readonly>
+                  <button id="selectLocalBtn" class="btn btn-outline">Browse</button>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="remoteFolder">ProtonDrive Folder:</label>
+                <div class="remote-folder-browser">
+                  <div class="breadcrumb">
+                    <span id="currentPath">ProtonDrive:/</span>
+                  </div>
+                  <div id="folderselect" class="folder-list"></div>
+                  <div class="selected-remote">
+                    <input type="text" id="remoteFolder" placeholder="Selected remote folder..." readonly>
+                    <button id="selectCurrentBtn" class="btn btn-outline">Select Current</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="autoSync">
+                  Enable automatic sync
+                </label>
+                <small class="help-text">
+                  Uses the interval configured in settings (default: 1 hour)
+                </small>
+              </div>
+              
+              <div class="form-group">
+                <label for="syncType">Sync Type:</label>
+                <select id="syncType">
+                  <option value="sync">Sync (one-way: local → remote)</option>
+                  <option value="bisync">Bisync (two-way: local ↔ remote)</option>
+                </select>
+                <small class="help-text">
+                  <strong>Sync:</strong> Only copies changes from local to remote.<br>
+                  <strong>Bisync:</strong> Synchronizes changes in both directions (experimental).<br>
+                  <em>Note:</em> First bisync run will automatically use --resync to initialize.
+                </small>
+              </div>
+              
+              <div class="form-group" id="bisyncOptions" style="display: none;">
+                <label>
+                  <input type="checkbox" id="forceResync">
+                  Force resync on next run (resets bisync state)
+                </label>
+                <small class="help-text">
+                  Use this if bisync is in an inconsistent state or after major changes.
+                </small>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="cancelBtn" class="btn btn-outline">Cancel</button>
+              <button id="saveSyncPairBtn" class="btn btn-primary">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Settings</h2>
+              <button class="close-btn" id="closeSettingsBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="syncInterval">Auto-sync Interval:</label>
+                <div class="interval-input">
+                  <input type="number" id="syncInterval" value="60" min="1" max="1440">
+                  <select id="intervalUnit">
+                    <option value="1">minutes</option>
+                    <option value="60">hours</option>
+                  </select>
+                </div>
+                <small class="help-text">
+                  Automatic sync will not start if any sync is already running
+                </small>
+              </div>
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="useExcludeFile">
+                  Use rclone filter file for filtering
+                </label>
+              </div>
+              <div class="form-group">
+                <label for="transfers">Concurrent Transfers:</label>
+                <input type="number" id="transfers" value="14" min="1" max="32">
+              </div>
+              <div class="form-group">
+                <label for="checkers">Checkers:</label>
+                <input type="number" id="checkers" value="14" min="1" max="32">
+              </div>
+              
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="startMinimized">
+                  Start minimized to tray
+                </label>
+              </div>
+              
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="closeToTray">
+                  Close to tray instead of exit
+                </label>
+              </div>
+              
+              <div class="form-group">
+                <label for="rcloneFilterContent">Rclone Filter Content:</label>
+                <textarea id="rcloneFilterContent" rows="15" placeholder="# Rclone filter rules (one per line)
+# Examples:
+- .DS_Store
+- Thumbs.db
+- desktop.ini
+- *.tmp
+- *.temp
+- *~
+- node_modules/**
+- .git/**
+- .vscode/**
+- *.log
+- *.cache"></textarea>
+                <small class="help-text">
+                  Direct rclone filter rules. Use '-' to exclude, '+' to include. Changes are applied immediately to all syncs.<br>
+                  <strong>Config location:</strong> <span id="configPath"></span><br>
+                  <strong>Documentation:</strong> <a href="https://rclone.org/filtering/" target="_blank">Rclone Filtering Documentation</a>
+                </small>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="cancelSettingsBtn" class="btn btn-outline">Cancel</button>
+              <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sync Log Modal -->
+        <div id="syncLogModal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Sync Log</h2>
+              <button class="close-btn" id="closeSyncLogBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div id="syncLogContent" class="sync-log-content"></div>
+            </div>
+            <div class="modal-footer">
+              <button id="clearSyncLogBtn" class="btn btn-outline">Clear Log</button>
+              <button id="closeSyncLogFooterBtn" class="btn btn-primary">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ProtonDrive Setup Modal -->
+        <div id="protonDriveSetupModal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Setup ProtonDrive Remote</h2>
+              <button class="close-btn" id="closeProtonDriveSetupBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div class="setup-info">
+                <p><strong>ProtonDrive remote not found!</strong></p>
+                <p>To use this app, you need to configure rclone with your ProtonDrive credentials.</p>
+              </div>
+              
+              <div class="form-group">
+                <label for="protonUsername">ProtonDrive Username (Email):</label>
+                <input type="email" id="protonUsername" placeholder="your-email@proton.me" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="protonPassword">ProtonDrive Password:</label>
+                <input type="password" id="protonPassword" placeholder="Your ProtonDrive password" required>
+                <small class="help-text">
+                  Your password is sent directly to rclone and not stored by this app.
+                </small>
+              </div>
+              
+              <div class="form-group">
+                <label for="protonTwoFA">2FA Code (if enabled):</label>
+                <input type="text" id="protonTwoFA" placeholder="123456" maxlength="6">
+                <small class="help-text">
+                  Leave empty if you don't have 2FA enabled on your ProtonDrive account.
+                </small>
+              </div>
+
+              <div id="setupStatus" class="setup-status hidden">
+                <div class="status-message"></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="cancelProtonSetupBtn" class="btn btn-outline">Cancel</button>
+              <button id="setupProtonBtn" class="btn btn-primary">Setup ProtonDrive</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Remote Warning -->
+        <div id="noRemoteWarning" class="warning-banner hidden">
+          <div class="warning-content">
+            <span class="warning-icon">⚠️</span>
+            <span class="warning-text">ProtonDrive remote not configured. </span>
+            <button id="showSetupBtn" class="btn btn-primary btn-small">Setup Now</button>
+            <button id="dismissWarningBtn" class="btn btn-outline btn-small">Dismiss</button>
+          </div>
+        </div>
+
+      </main>
+    </div>
+    <script src="renderer.js"></script>
+  </body>
+</html>
