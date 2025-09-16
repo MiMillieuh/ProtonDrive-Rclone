@@ -240,13 +240,15 @@ const createWindow = () => {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
-      contextIsolation: true
+      contextIsolation: true,
     },
     icon: path.join(__dirname, 'Assets', 'Img', 'folder.png'),
     show: !appState.settings.startMinimized
   });
 
   appState.mainWindow = mainWindow;
+
+  mainWindow.setMenuBarVisibility(false);
 
   // Handle close button
   mainWindow.on('close', (event) => {
