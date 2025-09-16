@@ -14,6 +14,9 @@ This app is not endorsed or officially supported by Proton.
 - [x] Change rclone transfer rate and checker rate
 - [x] Background sync
 
+## Requirements :
+- rclone
+
 ## Installing :
 Download the Appimage or zip from the [release](https://github.com/MiMillieuh/ProtonDrive-Rclone/releases)
 
