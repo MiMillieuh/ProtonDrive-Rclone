@@ -27,3 +27,6 @@ To start the app, run :
 
 To build the app, run : 
 `npm run make`
+
+## Support my projects : 
+You can support me on [Amethyst Lab's Ko-Fi](https://ko-fi.com/amethystlab)
