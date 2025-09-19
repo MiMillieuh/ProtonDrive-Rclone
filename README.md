@@ -6,7 +6,7 @@ This app is experimental and may not work as intended in specific situations. I'
 This app is not endorsed or officially supported by Proton.
 
 ## What works :
-- [x] Login to proton
+- [x] Login to proton (if login doesn't work configure the Rclone repo manually with the name "protondrive" [guide](https://rclone.org/protondrive/))
 - [x] Sync of files
 - [x] BiSync of files (can have issues)
 - [x] Rclone Filters
