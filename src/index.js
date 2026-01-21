@@ -17,7 +17,7 @@ const CONFIG_DIR = app.getPath('userData');
 const SYNC_PAIRS_PATH = path.join(CONFIG_DIR, 'syncpairs.json');
 const SETTINGS_PATH = path.join(CONFIG_DIR, 'settings.json');
 const RCLONE_FILTER_PATH = path.join(CONFIG_DIR, 'rclone-filter.txt');
-const RCLONE_COMMAND = '/usr/bin/rclone';
+const RCLONE_COMMAND = path.join(__dirname, 'bin', 'rclone-modified');
 
 // Application state
 let appState = {
@@ -325,10 +325,6 @@ function setupIpcHandlers(mainWindow) {
       mainWindow.webContents.send("localFolderSelected", result.filePaths[0]);
     }
   });
-
-
-
-
 
   // Save rclone filter content
   ipcMain.on("saveRcloneFilter", (event, content) => {
@@ -872,6 +868,8 @@ function saveSettings() {
 
 // Electron app event handlers
 app.whenReady().then(() => {
+  const { downloadRclone } = require('./download-rclone');
+  downloadRclone(); // Télécharger le binaire personnalisé
   createTray();
   createWindow();
 
